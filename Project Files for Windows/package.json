@@ -1,0 +1,50 @@
+{
+  "name": "john-smith",
+  "version": "1.0.0",
+  "description": "A description of your application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Your Company Name",
+  "license": "ISC",
+  "build": {
+    "appId": "your.app.id",
+    "productName": "YourProductName",
+    "directories": {
+      "output": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "ico.ico"
+    },
+    "mac": {
+      "target": "dir"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "ico.ico",
+      "uninstallerIcon": "ico.ico",
+      "installerHeaderIcon": "ico.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "license": "license.txt"
+    }
+  },
+  "devDependencies": {
+    "electron": "^27.0.4",
+    "electron-builder": "^24.6.4"
+  }
+}
