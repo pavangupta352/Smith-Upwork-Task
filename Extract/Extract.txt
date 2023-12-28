@@ -1,0 +1,560 @@
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" 
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <!-- http://wixtoolset.org/documentation/manual/v3/xsd/wix/product.html -->
+  <Product Id="99887A5F-F1A2-4EF7-8F5C-411957027C33" 
+           UpgradeCode="3fee8b48-639e-4104-8a54-e6e2b75cbbb3"
+           Name = "Extract (Machine - MSI)"
+           Version="1.0.0.0"
+           Manufacturer="Auto PDF Extract"
+           Language="1033">
+    <!-- Only run this installer on Windows 7 or up (or if it"s already installed, I guess) -->
+    <!-- <Condition Message="This application is only supported on Windows 7 or higher.">
+      <![CDATA[Installed OR (VersionNT >= 601)]]>
+    </Condition> -->
+    <!-- http://wixtoolset.org/documentation/manual/v3/xsd/wix/package.html -->
+    <Package InstallerVersion="405"
+             Compressed="yes"
+             Comments="Windows Installer Package"
+             Platform="x86"
+             InstallScope="perMachine"/>
+    <!-- Don't allow downgrades -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A later version of this product is already installed. Setup will now exit."/>
+    <!-- This will hide our Uninstall entry in Apps & Features. We doing this so
+    we can write our own which we can better control. -->
+    <Property Id="ARPSYSTEMCOMPONENT" Value="1" />
+    <!-- While the MSI package is hidden in Apps & Features, it can still be queried
+    via PowerShell and other means. To differentiate we give the public entry a slightly
+    different name to make admins life easier.  -->
+    <Property Id="VisibleProductName" Value="Extract (Machine)" />
+    <!-- Tells the package to install perUser or perMachine. In case of perUser, all
+    files will be redirected to the user profile and all registry entries to HKCU. -->
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="0" />
+    <!-- Overides the default install mode. It solves a problem where
+    individual packaged files that have the same version as in previous
+    installed App version will be deleted if the files are in use during
+    this upgrade. Unfortunately this causes an ICE 40 warning during linking. -->
+    <Property Id="REINSTALLMODE" Value="emus" />
+    <!-- Overrides the default reboot behavior if files are in use during the upgrade.
+    By default, this will be set to "ReallySuppress" to make sure no unexpected reboot will happpen.-->
+    <Property Id="REBOOT" Value="ReallySuppress" />
+    <!-- Installlation level to use that determines which features are installed.
+    see guides/enduser.md to check which Install Level maps to which feature that will
+    correspondingly get installed.
+    If not set, this will default to "2" (Main Feature, Launch On Login) -->
+    <Property Id="INSTALLLEVEL" Value="2" />
+    <!-- Allows to customize the Windows user group that gets access rights on
+    the install folder in cas the auto-updater is installed. User that run the App
+    must be part of that user group to be able to auto-update. -->
+    <Property Id="UPDATERUSERGROUP" Value="Users" />
+    <!-- A property to define whether the auto-updater is enabled when the
+    feature gets installed. This way the update can be installed but also be disabled
+    by overwriting the default value.  -->
+    <Property Id="AUTOUPDATEENABLED" Value="1" />
+    <!-- Necessary registry search to find the install path which is used by the
+    PurgeOnUninstall action. Since this package can be installed perUser or perMachine,
+    we have to look in both places. First successful search wins. -->
+    <Property Id="INSTALLPATH">
+      <RegistrySearch Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq"
+                      Root="HKCU" 
+                      Type="raw"
+                      Id="INSTALLPATH_REGSEARCH_HKCU"
+                      Name="InstallPath"
+                      Win64="no"/>
+      <RegistrySearch Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq"
+                      Root="HKLM" 
+                      Type="raw"
+                      Id="INSTALLPATH_REGSEARCH_HKLM"
+                      Name="InstallPath"
+                      Win64="no"/>
+    </Property>
+    <!-- Lets change the product name depending on the perUser installMode. 
+    This way the user and admins can see in which scope the MSI was installed. -->
+    <SetProperty Action="SetVisibleProductName" Id="VisibleProductName" Sequence="both" Before="AppSearch"  Value="Extract (User)">
+      <![CDATA[MSIINSTALLPERUSER = "1"]]>
+    </SetProperty>
+    <!-- Again we give thee MSI generaten entry a slightly different name to help 
+    differentiate between the public one and the invisible one. -->
+    <SetProperty Action="SetProductName" Id="ProductName" Sequence="both" Before="AppSearch"  Value="Extract (User - MSI)">
+      <![CDATA[MSIINSTALLPERUSER = "1"]]>
+    </SetProperty>
+
+    <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
+
+src/installer.wxs
+
+    <!-- Step 2: Add files and directories -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+       <!-- Installation files to %PROGRAMFILES% -->
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="APPLICATIONROOTDIRECTORY" Name="Extract">
+          <Directory Id="__9fbf4c0e_9827_4c4f_bb9e_9d00896f78ff" Name="app-1.0.0">
+            <Directory Id="_locales_6527f161_5571_4c30_9370_18d83270442c" Name="locales">
+              <Component Id="_locales_af.pak_256d7538_d0ea_4977_8a12_6c836d42eff1" Guid="583b5c14-c61f-481b-95d8-13431c1c44d3" Win64="no">
+                <File Name="af.pak" Id="_locales_af.pak_256d7538_d0ea_4977_8a12_6c836d42eff1" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\af.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_am.pak_da21e82f_8f3e_4062_bd35_650d089be2f1" Guid="c849d496-0f76-428e-bca9-8e35a405347e" Win64="no">
+                <File Name="am.pak" Id="_locales_am.pak_da21e82f_8f3e_4062_bd35_650d089be2f1" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\am.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ar.pak_75996e2c_7807_4074_96a5_a12f1122e5ac" Guid="b85a7680-f71e-4c85-9a66-33aeb39c9cf4" Win64="no">
+                <File Name="ar.pak" Id="_locales_ar.pak_75996e2c_7807_4074_96a5_a12f1122e5ac" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ar.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_bg.pak_37e181e0_02a6_4ce6_abd8_5c470489b4a7" Guid="7c69d080-0fea-4da3-beae-043966a28524" Win64="no">
+                <File Name="bg.pak" Id="_locales_bg.pak_37e181e0_02a6_4ce6_abd8_5c470489b4a7" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\bg.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_bn.pak_a5780374_19a8_4697_82b9_ad7669ba09c7" Guid="c7843d3c-5164-4000-8ae7-44ff4f585a4a" Win64="no">
+                <File Name="bn.pak" Id="_locales_bn.pak_a5780374_19a8_4697_82b9_ad7669ba09c7" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\bn.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ca.pak_6be6e557_b71a_42a7_a379_f111fb6616b5" Guid="584830fd-9781-40b4-a67d-f4a7d584a15b" Win64="no">
+                <File Name="ca.pak" Id="_locales_ca.pak_6be6e557_b71a_42a7_a379_f111fb6616b5" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ca.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_cs.pak_e0b0aee0_3f5c_4839_9dfc_c750ddbb5264" Guid="9adab68f-d04e-48e8-bc94-60e01e8fbe50" Win64="no">
+                <File Name="cs.pak" Id="_locales_cs.pak_e0b0aee0_3f5c_4839_9dfc_c750ddbb5264" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\cs.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_da.pak_94e5b62e_1fa1_4fe9_bedd_45bc73d298dd" Guid="c768e069-20f9-4c09-843a-ddee1cb1e6e6" Win64="no">
+                <File Name="da.pak" Id="_locales_da.pak_94e5b62e_1fa1_4fe9_bedd_45bc73d298dd" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\da.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_de.pak_339cf70f_66be_43e3_a46c_9ba35ba0efa8" Guid="baa145c9-64cd-40d2-b5b4-f98e68188a4d" Win64="no">
+                <File Name="de.pak" Id="_locales_de.pak_339cf70f_66be_43e3_a46c_9ba35ba0efa8" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\de.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_el.pak_39edc554_c7f4_4bc2_8095_f9ce21590454" Guid="24fd451d-583f-4e01-a770-87c34c8c9c1d" Win64="no">
+                <File Name="el.pak" Id="_locales_el.pak_39edc554_c7f4_4bc2_8095_f9ce21590454" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\el.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_en_GB.pak_000e4392_61e6_47f7_9cf5_b15301245723" Guid="ded415e5-83b2-4776-873f-d8c866912a4d" Win64="no">
+                <File Name="en-GB.pak" Id="_locales_en_GB.pak_000e4392_61e6_47f7_9cf5_b15301245723" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\en-GB.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_en_US.pak_7c53ac79_396d_4835_ad9f_34baf1cb3db4" Guid="e1e89980-fa70-4c65-aff1-534fd148e4fa" Win64="no">
+                <File Name="en-US.pak" Id="_locales_en_US.pak_7c53ac79_396d_4835_ad9f_34baf1cb3db4" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\en-US.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_es_419.pak_74e51767_c4ff_47b0_a75c_d9d2c478c027" Guid="1e45778b-1863-4bfb-861d-b86544125a22" Win64="no">
+                <File Name="es-419.pak" Id="_locales_es_419.pak_74e51767_c4ff_47b0_a75c_d9d2c478c027" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\es-419.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_es.pak_608f875c_e5db_4d2e_8b2c_53e1eb8f20df" Guid="4d6315e9-beed-4457-ad5c-3f658d2c20bc" Win64="no">
+                <File Name="es.pak" Id="_locales_es.pak_608f875c_e5db_4d2e_8b2c_53e1eb8f20df" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\es.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_et.pak_8e149513_c414_48da_8780_71905928686b" Guid="5678b0c0-ae42-4036-9a69-d17051db47e1" Win64="no">
+                <File Name="et.pak" Id="_locales_et.pak_8e149513_c414_48da_8780_71905928686b" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\et.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_fa.pak_84d24fa1_8857_49ff_9066_84280a58a9b7" Guid="d0833799-4430-49d3-b370-1995975d619f" Win64="no">
+                <File Name="fa.pak" Id="_locales_fa.pak_84d24fa1_8857_49ff_9066_84280a58a9b7" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\fa.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_fi.pak_3b34ff32_9ea5_4fe3_b2a8_369711e5d724" Guid="105c43f9-30ae-4d05-b38c-86aff351517c" Win64="no">
+                <File Name="fi.pak" Id="_locales_fi.pak_3b34ff32_9ea5_4fe3_b2a8_369711e5d724" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\fi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_fil.pak_c92ad36c_bec5_4a89_9320_5791162f508f" Guid="e033d548-9e03-4551-a570-e02614609023" Win64="no">
+                <File Name="fil.pak" Id="_locales_fil.pak_c92ad36c_bec5_4a89_9320_5791162f508f" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\fil.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_fr.pak_c48b04a0_1b7a_4b2a_8247_6e06140fa4b5" Guid="c2fa4eac-271f-4068-819c-a6615257125c" Win64="no">
+                <File Name="fr.pak" Id="_locales_fr.pak_c48b04a0_1b7a_4b2a_8247_6e06140fa4b5" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\fr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_gu.pak_dd1b1cb2_5bd9_49d5_8b61_d77118d9bf94" Guid="3639490d-470f-4802-ad98-a85f213cd2fa" Win64="no">
+                <File Name="gu.pak" Id="_locales_gu.pak_dd1b1cb2_5bd9_49d5_8b61_d77118d9bf94" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\gu.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_he.pak_1f3e51d1_6709_4447_b921_a0700e145e97" Guid="11ef936e-6805-49d5-a7d4-c187e6dafaba" Win64="no">
+                <File Name="he.pak" Id="_locales_he.pak_1f3e51d1_6709_4447_b921_a0700e145e97" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\he.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_hi.pak_51d71ae4_30da_4ec1_ae19_11eafc860a2b" Guid="04002115-f0ac-471b-96b3-a3b5297599ec" Win64="no">
+                <File Name="hi.pak" Id="_locales_hi.pak_51d71ae4_30da_4ec1_ae19_11eafc860a2b" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\hi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_hr.pak_53e0a7c3_2e4e_42bc_b671_79937f6ac5a5" Guid="656967f0-21f1-4730-bcfd-ac429523d0fd" Win64="no">
+                <File Name="hr.pak" Id="_locales_hr.pak_53e0a7c3_2e4e_42bc_b671_79937f6ac5a5" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\hr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_hu.pak_f927831a_232c_4d3a_87ed_34aca0bf40a6" Guid="9752bb0b-3363-42ff-8a28-050c5aa25808" Win64="no">
+                <File Name="hu.pak" Id="_locales_hu.pak_f927831a_232c_4d3a_87ed_34aca0bf40a6" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\hu.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_id.pak_f1e1d9dd_ecca_4780_a85a_b4357e847b51" Guid="ce727623-41d7-4c53-828d-7ef3f31f5c8a" Win64="no">
+                <File Name="id.pak" Id="_locales_id.pak_f1e1d9dd_ecca_4780_a85a_b4357e847b51" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\id.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_it.pak_68f3f222_0e94_4dcb_b932_d7684aa2a22d" Guid="9520b2fe-ac7f-4fc9-aa7e-08c30e28dbde" Win64="no">
+                <File Name="it.pak" Id="_locales_it.pak_68f3f222_0e94_4dcb_b932_d7684aa2a22d" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\it.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ja.pak_c5d3445c_3bbf_4f66_b103_e8d0375e1497" Guid="a5ebfcef-2e82-4209-b2b0-8e3d4bb2fba3" Win64="no">
+                <File Name="ja.pak" Id="_locales_ja.pak_c5d3445c_3bbf_4f66_b103_e8d0375e1497" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ja.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_kn.pak_390b7580_616c_4440_beff_09dafcb223c8" Guid="8696ca6a-bb28-4c26-992a-219e3dbd6361" Win64="no">
+                <File Name="kn.pak" Id="_locales_kn.pak_390b7580_616c_4440_beff_09dafcb223c8" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\kn.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ko.pak_c271dfb8_f212_4a40_ae2b_4c9379354075" Guid="2ff16d6c-938e-4fc4-8e81-1177fda8b4a7" Win64="no">
+                <File Name="ko.pak" Id="_locales_ko.pak_c271dfb8_f212_4a40_ae2b_4c9379354075" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ko.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_lt.pak_c86356eb_30c9_49c6_b499_a991f3298fd8" Guid="631f8df8-feab-47e5-8324-c3c1a080af3c" Win64="no">
+                <File Name="lt.pak" Id="_locales_lt.pak_c86356eb_30c9_49c6_b499_a991f3298fd8" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\lt.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_lv.pak_79629435_3a5f_4db1_b1d3_654db75ec246" Guid="e9f2a16d-2455-4e1e-97e0-92c187c01452" Win64="no">
+                <File Name="lv.pak" Id="_locales_lv.pak_79629435_3a5f_4db1_b1d3_654db75ec246" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\lv.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ml.pak_227aa978_2d67_4465_b8bb_3e2310536229" Guid="b6dbb67a-f5f6-4d27-8b29-dbe24bc82578" Win64="no">
+                <File Name="ml.pak" Id="_locales_ml.pak_227aa978_2d67_4465_b8bb_3e2310536229" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ml.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_mr.pak_a5cfd046_1331_400f_afd6_1417a45c0985" Guid="058088bb-b1ca-4149-9efa-635fc2c1f606" Win64="no">
+                <File Name="mr.pak" Id="_locales_mr.pak_a5cfd046_1331_400f_afd6_1417a45c0985" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\mr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ms.pak_b15382cc_3fa0_483b_a1ff_30eada2d1432" Guid="16af915b-723a-4263-aee5-cd0e7f8e6891" Win64="no">
+                <File Name="ms.pak" Id="_locales_ms.pak_b15382cc_3fa0_483b_a1ff_30eada2d1432" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ms.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_nb.pak_bf89d7bf_8161_43d4_8e79_e922c1958323" Guid="65438b81-def8-4475-99ea-e75d2677d5fe" Win64="no">
+                <File Name="nb.pak" Id="_locales_nb.pak_bf89d7bf_8161_43d4_8e79_e922c1958323" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\nb.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_nl.pak_83f6121d_99f7_48cb_a2da_3f3b86efdcad" Guid="e7999f40-0053-4d7b-8430-8fb64ff2248c" Win64="no">
+                <File Name="nl.pak" Id="_locales_nl.pak_83f6121d_99f7_48cb_a2da_3f3b86efdcad" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\nl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_pl.pak_71205e76_fd42_4c77_bd3d_733563e4a3f5" Guid="ed5f8638-c6ec-4523-a93c-8f0f1ad2c6e2" Win64="no">
+                <File Name="pl.pak" Id="_locales_pl.pak_71205e76_fd42_4c77_bd3d_733563e4a3f5" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\pl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_pt_BR.pak_c5bc74eb_dcb6_430f_af6b_f0b82a501b93" Guid="85412582-e553-4288-9def-09c8f2000770" Win64="no">
+                <File Name="pt-BR.pak" Id="_locales_pt_BR.pak_c5bc74eb_dcb6_430f_af6b_f0b82a501b93" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\pt-BR.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_pt_PT.pak_ae6b5a19_944d_4962_a5bb_aff657e97483" Guid="9db529be-2696-47ce-9e6e-524d019ab223" Win64="no">
+                <File Name="pt-PT.pak" Id="_locales_pt_PT.pak_ae6b5a19_944d_4962_a5bb_aff657e97483" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\pt-PT.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ro.pak_bd61f80e_fd30_4494_a537_9d0f4d924967" Guid="4891db9c-71e0-4a71-9042-5f54517ac217" Win64="no">
+                <File Name="ro.pak" Id="_locales_ro.pak_bd61f80e_fd30_4494_a537_9d0f4d924967" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ro.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ru.pak_eb066236_7e4b_40e4_bcd1_66e25e3452a9" Guid="d9cd1e63-b786-44b9-88e9-7487c0667de5" Win64="no">
+                <File Name="ru.pak" Id="_locales_ru.pak_eb066236_7e4b_40e4_bcd1_66e25e3452a9" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ru.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sk.pak_3dd64332_0979_40da_9e5e_c39d47dabff9" Guid="330a14fc-86cf-4446-b625-190410494d43" Win64="no">
+                <File Name="sk.pak" Id="_locales_sk.pak_3dd64332_0979_40da_9e5e_c39d47dabff9" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\sk.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sl.pak_124ffc08_80d0_4127_8ef8_a00e545449c6" Guid="d9611aec-1e84-4c58-9b51-2c4fcb1d8d6e" Win64="no">
+                <File Name="sl.pak" Id="_locales_sl.pak_124ffc08_80d0_4127_8ef8_a00e545449c6" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\sl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sr.pak_5aa7e921_b663_4304_9718_25f67b2bcc98" Guid="3dc94c49-ba39-4dc9-8192-70ff986de1b2" Win64="no">
+                <File Name="sr.pak" Id="_locales_sr.pak_5aa7e921_b663_4304_9718_25f67b2bcc98" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\sr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sv.pak_25e4eede_74aa_446f_ae69_4450e4d23030" Guid="665795ea-8baa-4bf9-8277-60f6262648bb" Win64="no">
+                <File Name="sv.pak" Id="_locales_sv.pak_25e4eede_74aa_446f_ae69_4450e4d23030" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\sv.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sw.pak_98e3f8a5_9410_4b23_aadf_81d11bf89a3e" Guid="3c0c1014-a3e1-4405-8758-b4f883cb81f4" Win64="no">
+                <File Name="sw.pak" Id="_locales_sw.pak_98e3f8a5_9410_4b23_aadf_81d11bf89a3e" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\sw.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ta.pak_eb06391b_89f8_4584_ac02_dbd3ebce3eee" Guid="4c81ecc2-8617-41b8-a12e-45a6b58361b6" Win64="no">
+                <File Name="ta.pak" Id="_locales_ta.pak_eb06391b_89f8_4584_ac02_dbd3ebce3eee" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ta.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_te.pak_cbc13de2_374d_44d6_ab5c_350a3a91c0fe" Guid="4c300959-3dd5-402e-af44-9bc139baa716" Win64="no">
+                <File Name="te.pak" Id="_locales_te.pak_cbc13de2_374d_44d6_ab5c_350a3a91c0fe" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\te.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_th.pak_edc8f3f1_cba2_4436_9277_3d5b6fbad776" Guid="d5bac461-acbe-44f7-ad1f-20f455e4d6a9" Win64="no">
+                <File Name="th.pak" Id="_locales_th.pak_edc8f3f1_cba2_4436_9277_3d5b6fbad776" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\th.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_tr.pak_9b7aee1e_b625_497d_bf3e_5bf34348b169" Guid="05153d66-566c-4cda-98d2-61e3488c677d" Win64="no">
+                <File Name="tr.pak" Id="_locales_tr.pak_9b7aee1e_b625_497d_bf3e_5bf34348b169" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\tr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_uk.pak_3d7cd1a8_d709_4c83_8e7d_ebfe26714c06" Guid="1771d8c2-6eba-4a15-82d6-caa75d557495" Win64="no">
+                <File Name="uk.pak" Id="_locales_uk.pak_3d7cd1a8_d709_4c83_8e7d_ebfe26714c06" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\uk.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ur.pak_31d28eae_caa1_4943_9b63_9574ab246bc0" Guid="0131367d-161b-4175-a87a-f7bcba1e79ba" Win64="no">
+                <File Name="ur.pak" Id="_locales_ur.pak_31d28eae_caa1_4943_9b63_9574ab246bc0" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\ur.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_vi.pak_ec3bc7d9_dce5_4602_9475_b48e875f4668" Guid="2e0b5e28-52f9-4619-b7a7-2224e07e983d" Win64="no">
+                <File Name="vi.pak" Id="_locales_vi.pak_ec3bc7d9_dce5_4602_9475_b48e875f4668" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\vi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_zh_CN.pak_96a3da26_a660_4d11_b18a_a629e9f023b5" Guid="561a9e91-8f4a-4145-9521-8f6aee8a5946" Win64="no">
+                <File Name="zh-CN.pak" Id="_locales_zh_CN.pak_96a3da26_a660_4d11_b18a_a629e9f023b5" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\zh-CN.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_zh_TW.pak_397a4438_ad24_4c8c_b11a_ccc7aa1c31f3" Guid="3498ebd2-eb4e-4400-a46c-16f1477d97f9" Win64="no">
+                <File Name="zh-TW.pak" Id="_locales_zh_TW.pak_397a4438_ad24_4c8c_b11a_ccc7aa1c31f3" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\locales\zh-TW.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+            </Directory>
+            <Directory Id="_resources_75be0ddb_e9db_41fb_8f30_6b0ff26c77be" Name="resources">
+              <Directory Id="_resources_app.asar.unpacked_c5037568_fbfa_4f25_81f4_20fb3319bf08" Name="app.asar.unpacked">
+                <Directory Id="_node_modules_2b3258f0_8c5d_457f_acda_dcc9c1ce239f" Name="node_modules">
+                  <Directory Id="__bitdisaster_89dc7a37_18ad_4078_8101_98cdf47e697c" Name="@bitdisaster">
+                    <Directory Id="_exe_icon_extractor_75a7bfcb_ffaf_4963_b68c_a867e1c46f5c" Name="exe-icon-extractor">
+                      <Directory Id="_bin_9578e9f2_685f_4294_9ac4_8eb497cb75c1" Name="bin">
+                        <Directory Id="_win32_x64_118_2c7538a4_d164_49b9_80fe_f7faef740e0e" Name="win32-x64-118">
+                          <Component Id="_exe_icon_extractor.node_58f7f19e_138a_4b10_915b_6d5e6cd3201b" Guid="d7c78634-5902-401d-b9c9-5c309e989648" Win64="no">
+                            <File Name="exe-icon-extractor.node" Id="_exe_icon_extractor.node_58f7f19e_138a_4b10_915b_6d5e6cd3201b" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\resources\app.asar.unpacked\node_modules\@bitdisaster\exe-icon-extractor\bin\win32-x64-118\exe-icon-extractor.node" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                          </Component>
+                        </Directory>
+                      </Directory>
+
+                      <Directory Id="_build_8597503a_266a_4da3_bfd7_495a2265348c" Name="build">
+                        <Directory Id="_Release_16820e73_c1f2_4839_8b03_da3a48c9ce5b" Name="Release">
+                          <Component Id="_module.node_0c0bde85_6e7b_4096_bd40_e29154bbf23e" Guid="7326d5b1-ec45-4297-bd0f-1e0cd5b6aa43" Win64="no">
+                            <File Name="module.node" Id="_module.node_0c0bde85_6e7b_4096_bd40_e29154bbf23e" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\resources\app.asar.unpacked\node_modules\@bitdisaster\exe-icon-extractor\build\Release\module.node" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                          </Component>
+                        </Directory>
+                      </Directory>
+
+                    </Directory>
+
+                  </Directory>
+
+                  <Directory Id="_exe_icon_extractor_29a937c5_0c9d_40dc_8ece_4294720424a0" Name="exe-icon-extractor">
+                    <Directory Id="_bin_078a1689_0c71_493b_9b97_37d3b27adb6a" Name="bin">
+                      <Directory Id="_win32_x64_118_5c2a21e5_ced7_4aef_ab01_8d4bb75a42dd" Name="win32-x64-118">
+                        <Component Id="_exe_icon_extractor.node_6cc84663_588b_44cd_85e2_5f68a7ce7aad" Guid="715dd7be-c7d7-4fb5-b14a-1ea580462880" Win64="no">
+                          <File Name="exe-icon-extractor.node" Id="_exe_icon_extractor.node_6cc84663_588b_44cd_85e2_5f68a7ce7aad" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\resources\app.asar.unpacked\node_modules\exe-icon-extractor\bin\win32-x64-118\exe-icon-extractor.node" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                        </Component>
+                      </Directory>
+                    </Directory>
+
+                    <Directory Id="_build_7f1a5031_a0f5_4df2_9c34_a6c934750b4c" Name="build">
+                      <Directory Id="_Release_b94cd16f_5928_40a0_9320_4fccc7b8db98" Name="Release">
+                        <Component Id="_module.node_8fd1737b_1f6c_4c7d_a7ae_10f52108da79" Guid="175a9b51-9b63-4d4f-8b22-33c327273063" Win64="no">
+                          <File Name="module.node" Id="_module.node_8fd1737b_1f6c_4c7d_a7ae_10f52108da79" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\resources\app.asar.unpacked\node_modules\exe-icon-extractor\build\Release\module.node" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                        </Component>
+                      </Directory>
+                    </Directory>
+
+                  </Directory>
+
+                </Directory>
+
+              </Directory>
+              <Component Id="_resources_app.asar_765f32f8_2fb1_4dcf_9c98_247e29ab2c18" Guid="bb034dc3-1159-45d7-83d1-c6cf88e93d4d" Win64="no">
+                <File Name="app.asar" Id="_resources_app.asar_765f32f8_2fb1_4dcf_9c98_247e29ab2c18" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\resources\app.asar" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+            </Directory>
+            <Component Id="_Extract.exe_46468665_9478_455c_9353_da134a9a28a9" Guid="cbe21472-c742-4761-93fb-0c65d02acc82" Win64="no">
+              <File Name="Extract.exe" Id="_Extract.exe_46468665_9478_455c_9353_da134a9a28a9" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\Extract.exe" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_LICENSE_a37a44d5_114e_47ef_a9c2_2d2751679289" Guid="34397fb0-b109-4762-ae80-a1b9f2931d03" Win64="no">
+              <File Name="LICENSE" Id="_LICENSE_a37a44d5_114e_47ef_a9c2_2d2751679289" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\LICENSE" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_LICENSES.chromium.html_a6147c40_d0f8_4e5e_a496_b5dd1ea5d896" Guid="4f5341c9-bbf0-47a2-aee2-6034dca4ce98" Win64="no">
+              <File Name="LICENSES.chromium.html" Id="_LICENSES.chromium.html_a6147c40_d0f8_4e5e_a496_b5dd1ea5d896" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\LICENSES.chromium.html" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_Squirrel.exe_ff460649_e6c9_4e84_a224_f9539c262d98" Guid="b7408239-51f7-40ce-8e71-db6e0e2d69a7" Win64="no">
+              <File Name="Squirrel.exe" Id="_Squirrel.exe_ff460649_e6c9_4e84_a224_f9539c262d98" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\Squirrel.exe" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_chrome_100_percent.pak_db530490_78cd_4f63_b22c_bb8a33264ac6" Guid="fcc40fae-c2be-48e4-88ad-455b6f1c7e33" Win64="no">
+              <File Name="chrome_100_percent.pak" Id="_chrome_100_percent.pak_db530490_78cd_4f63_b22c_bb8a33264ac6" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\chrome_100_percent.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_chrome_200_percent.pak_b76f6ec4_3fc1_4790_8b27_f3f8afa69f30" Guid="d6084f61-fbd4-4eda-a80c-761c21db15a8" Win64="no">
+              <File Name="chrome_200_percent.pak" Id="_chrome_200_percent.pak_b76f6ec4_3fc1_4790_8b27_f3f8afa69f30" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\chrome_200_percent.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_d3dcompiler_47.dll_d5075cf2_136b_4476_95d0_15a296805b4c" Guid="d741dfec-9c91-4edd-9207-21211b893ff9" Win64="no">
+              <File Name="d3dcompiler_47.dll" Id="_d3dcompiler_47.dll_d5075cf2_136b_4476_95d0_15a296805b4c" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\d3dcompiler_47.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_ffmpeg.dll_624151bf_5885_40c6_9c24_eff119abcf14" Guid="423cfa5c-b4b6-4295-bbdf-4684c90df20f" Win64="no">
+              <File Name="ffmpeg.dll" Id="_ffmpeg.dll_624151bf_5885_40c6_9c24_eff119abcf14" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\ffmpeg.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_icudtl.dat_92942024_1dde_4657_9ae8_25638aba6d3f" Guid="f18a308e-d43a-4479-8e72-ad3c3669e312" Win64="no">
+              <File Name="icudtl.dat" Id="_icudtl.dat_92942024_1dde_4657_9ae8_25638aba6d3f" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\icudtl.dat" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_libEGL.dll_1e070300_b250_4466_8fbd_bf9e46f4762b" Guid="6e43e776-d93e-4ddf-b3ae-4efe0a139c2c" Win64="no">
+              <File Name="libEGL.dll" Id="_libEGL.dll_1e070300_b250_4466_8fbd_bf9e46f4762b" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\libEGL.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_libGLESv2.dll_4ad4b51b_b188_4df7_910a_a7d0dcc8965b" Guid="c9acca87-fe6f-4fb0-a211-fc54d672254c" Win64="no">
+              <File Name="libGLESv2.dll" Id="_libGLESv2.dll_4ad4b51b_b188_4df7_910a_a7d0dcc8965b" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\libGLESv2.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_resources.pak_c97c79e3_26c9_465e_8cae_da3549abe10f" Guid="6e9b2cc2-68c2-4c97-b319-8f8f5d20e9fb" Win64="no">
+              <File Name="resources.pak" Id="_resources.pak_c97c79e3_26c9_465e_8cae_da3549abe10f" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\resources.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_snapshot_blob.bin_da56a27b_9df7_47d5_9ab0_661b0ed9ab46" Guid="eedb9c36-76fd-4780-aa9b-7672f1efba7e" Win64="no">
+              <File Name="snapshot_blob.bin" Id="_snapshot_blob.bin_da56a27b_9df7_47d5_9ab0_661b0ed9ab46" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\snapshot_blob.bin" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_v8_context_snapshot.bin_460ccebd_2867_493c_a642_15c53002164b" Guid="771c2bdd-babe-4224-bb33-c049a161b59f" Win64="no">
+              <File Name="v8_context_snapshot.bin" Id="_v8_context_snapshot.bin_460ccebd_2867_493c_a642_15c53002164b" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\v8_context_snapshot.bin" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_version_9da55426_1c6c_4472_89ad_4964bc0ce7f5" Guid="ac86eeac-a54f-4d3f-935a-fce09d8b5cfb" Win64="no">
+              <File Name="version" Id="_version_9da55426_1c6c_4472_89ad_4964bc0ce7f5" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\version" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_vk_swiftshader.dll_13b66267_68f0_46c2_bbd0_054b393282ea" Guid="a9562bfc-26dd-434e-8203-85572fc8752e" Win64="no">
+              <File Name="vk_swiftshader.dll" Id="_vk_swiftshader.dll_13b66267_68f0_46c2_bbd0_054b393282ea" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\vk_swiftshader.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_vk_swiftshader_icd.json_87db7729_fde5_46a2_a3d8_9debccadc50c" Guid="6bba0c89-f869-4c80-ad44-e73f3c369d6b" Win64="no">
+              <File Name="vk_swiftshader_icd.json" Id="_vk_swiftshader_icd.json_87db7729_fde5_46a2_a3d8_9debccadc50c" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\vk_swiftshader_icd.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_vulkan_1.dll_5c27d444_65f5_4764_9521_7ffe9249fc27" Guid="2749ea99-4a52-4f13-857b-a2ab6147f260" Win64="no">
+              <File Name="vulkan-1.dll" Id="_vulkan_1.dll_5c27d444_65f5_4764_9521_7ffe9249fc27" Source="C:\hamid\dev\dataviz\ExtractApp\Extract\my-app\out\Extract-win32-x64\vulkan-1.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+          </Directory>
+          <Component Id="_Extract.exe_f53fe8bf_3bb0_447f_89a7_ea99990468af" Guid="02692882-c129-4529-a09a-1468a920237a" Win64="no">
+            <File Name="Extract.exe" Id="_Extract.exe_f53fe8bf_3bb0_447f_89a7_ea99990468af" Source="C:\Users\hbenb\AppData\Local\Temp\Extractt5jkyw\Extract.exe" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+          </Component>
+          <Component Id="_.installInfo.json_c7bb140a_99cf_4ca3_83dc_dbafe332fa78" Guid="1d6371d6-4744-4dfe-adca-a09379276d76" Win64="no">
+            <File Name=".installInfo.json" Id="_.installInfo.json_c7bb140a_99cf_4ca3_83dc_dbafe332fa78" Source="C:\Users\hbenb\AppData\Local\Temp\.installInfogOcOjL\.installInfo.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+          </Component>
+          <Component Id="RegistryInstallPath" Guid="2e15d2a2-b283-473c-9abe-67fb56997677" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="InstallPath" Type="string" Value="[APPLICATIONROOTDIRECTORY]" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallDisplayName" Guid="8cd420d6-2758-48b2-b606-d0d5f2e6535f" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="DisplayName" Type="string" Value="[VisibleProductName]" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallPublisher" Guid="986c467b-5de1-496d-b2fa-78243c43076e" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="Publisher" Type="string" Value="Auto PDF Extract" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallDisplayVersion" Guid="c6b90322-a1d8-47c9-9379-64d7b0205ce2" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="DisplayVersion" Type="string" Value="1.0.0" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallModifyString" Guid="c0131fb4-e846-4268-946a-54c54618608b" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="ModifyPath" Type="expandable" Value="MsiExec.exe /I {99887A5F-F1A2-4EF7-8F5C-411957027C33}" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallString" Guid="3d5c7292-ee6d-42fb-acc8-639d36011508" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="UninstallString" Type="expandable" Value="MsiExec.exe /X {99887A5F-F1A2-4EF7-8F5C-411957027C33}" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallDisplayIcon" Guid="83805842-449b-44b9-9c9f-4e19e742f24a" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{99887A5F-F1A2-4EF7-8F5C-411957027C33}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="DisplayIcon" Type="expandable" Value="[SystemFolder]msiexec.exe" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+        </Directory>
+      </Directory>
+
+      <!-- Desktop -->
+      <Directory Id="DesktopFolder" Name="Desktop" />
+
+      <!-- Start Menu -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Auto PDF Extract"/>
+      </Directory>
+    </Directory>
+
+    <!-- Step 3: Add app to Start Menu -->
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="af88aaf4-706a-44bd-9f4b-848eb1deeeca" Win64="no">
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="Extract"
+                  Description="Extract data from files"
+                  Target="[APPLICATIONROOTDIRECTORY]Extract.exe"
+                  WorkingDirectory="APPLICATIONROOTDIRECTORY">
+          <ShortcutProperty Key="System.AppUserModel.ID" Value="com.squirrel.extract.extract"/>
+        </Shortcut>
+        <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU"
+                       Key="Software\Microsoft\Extract"
+                       Name="installed"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
+
+   <!-- Step 4: Add app desktop shortcut --> 
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="dbbc611a-72d8-4dd9-8dac-de3a2e6e83f8" >
+          <Shortcut Id="MyDesktopShortcut"
+                    Name="Extract"
+                    Description="Extract data from files"
+                    Target="[APPLICATIONROOTDIRECTORY]Extract.exe"
+                    WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+          <RegistryValue Root="HKCU"
+                    Key="Software\Microsoft\Extract"
+                    Name="installed"
+                    Type="integer"
+                    Value="1"
+                    KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+
+    <!-- Lets cleanup any files that are were not part of the initial install
+    via this MSI. Such as newer versions installed by the auto-updater. -->
+    <DirectoryRef Id="APPLICATIONROOTDIRECTORY">
+      <Component Id="PurgeOnUninstall" Guid="856b08cd-0ea8-469d-919d-985cf86d6ee5" Win64="no">
+        <CreateFolder/>
+        <util:RemoveFolderEx On="uninstall" Property="INSTALLPATH" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="Complete" Title="Extract (1.0.0)" Description="The complete package." Display="expand" Level="1" >
+      <!-- Step 5: Tell WiX to install the files -->
+      <Feature Id="MainApplication" Title="Main Application" Level="1" Description="The main components to run the applications." >
+        <ComponentRef Id="_locales_af.pak_256d7538_d0ea_4977_8a12_6c836d42eff1" />
+        <ComponentRef Id="_locales_am.pak_da21e82f_8f3e_4062_bd35_650d089be2f1" />
+        <ComponentRef Id="_locales_ar.pak_75996e2c_7807_4074_96a5_a12f1122e5ac" />
+        <ComponentRef Id="_locales_bg.pak_37e181e0_02a6_4ce6_abd8_5c470489b4a7" />
+        <ComponentRef Id="_locales_bn.pak_a5780374_19a8_4697_82b9_ad7669ba09c7" />
+        <ComponentRef Id="_locales_ca.pak_6be6e557_b71a_42a7_a379_f111fb6616b5" />
+        <ComponentRef Id="_locales_cs.pak_e0b0aee0_3f5c_4839_9dfc_c750ddbb5264" />
+        <ComponentRef Id="_locales_da.pak_94e5b62e_1fa1_4fe9_bedd_45bc73d298dd" />
+        <ComponentRef Id="_locales_de.pak_339cf70f_66be_43e3_a46c_9ba35ba0efa8" />
+        <ComponentRef Id="_locales_el.pak_39edc554_c7f4_4bc2_8095_f9ce21590454" />
+        <ComponentRef Id="_locales_en_GB.pak_000e4392_61e6_47f7_9cf5_b15301245723" />
+        <ComponentRef Id="_locales_en_US.pak_7c53ac79_396d_4835_ad9f_34baf1cb3db4" />
+        <ComponentRef Id="_locales_es_419.pak_74e51767_c4ff_47b0_a75c_d9d2c478c027" />
+        <ComponentRef Id="_locales_es.pak_608f875c_e5db_4d2e_8b2c_53e1eb8f20df" />
+        <ComponentRef Id="_locales_et.pak_8e149513_c414_48da_8780_71905928686b" />
+        <ComponentRef Id="_locales_fa.pak_84d24fa1_8857_49ff_9066_84280a58a9b7" />
+        <ComponentRef Id="_locales_fi.pak_3b34ff32_9ea5_4fe3_b2a8_369711e5d724" />
+        <ComponentRef Id="_locales_fil.pak_c92ad36c_bec5_4a89_9320_5791162f508f" />
+        <ComponentRef Id="_locales_fr.pak_c48b04a0_1b7a_4b2a_8247_6e06140fa4b5" />
+        <ComponentRef Id="_locales_gu.pak_dd1b1cb2_5bd9_49d5_8b61_d77118d9bf94" />
+        <ComponentRef Id="_locales_he.pak_1f3e51d1_6709_4447_b921_a0700e145e97" />
+        <ComponentRef Id="_locales_hi.pak_51d71ae4_30da_4ec1_ae19_11eafc860a2b" />
+        <ComponentRef Id="_locales_hr.pak_53e0a7c3_2e4e_42bc_b671_79937f6ac5a5" />
+        <ComponentRef Id="_locales_hu.pak_f927831a_232c_4d3a_87ed_34aca0bf40a6" />
+        <ComponentRef Id="_locales_id.pak_f1e1d9dd_ecca_4780_a85a_b4357e847b51" />
+        <ComponentRef Id="_locales_it.pak_68f3f222_0e94_4dcb_b932_d7684aa2a22d" />
+        <ComponentRef Id="_locales_ja.pak_c5d3445c_3bbf_4f66_b103_e8d0375e1497" />
+        <ComponentRef Id="_locales_kn.pak_390b7580_616c_4440_beff_09dafcb223c8" />
+        <ComponentRef Id="_locales_ko.pak_c271dfb8_f212_4a40_ae2b_4c9379354075" />
+        <ComponentRef Id="_locales_lt.pak_c86356eb_30c9_49c6_b499_a991f3298fd8" />
+        <ComponentRef Id="_locales_lv.pak_79629435_3a5f_4db1_b1d3_654db75ec246" />
+        <ComponentRef Id="_locales_ml.pak_227aa978_2d67_4465_b8bb_3e2310536229" />
+        <ComponentRef Id="_locales_mr.pak_a5cfd046_1331_400f_afd6_1417a45c0985" />
+        <ComponentRef Id="_locales_ms.pak_b15382cc_3fa0_483b_a1ff_30eada2d1432" />
+        <ComponentRef Id="_locales_nb.pak_bf89d7bf_8161_43d4_8e79_e922c1958323" />
+        <ComponentRef Id="_locales_nl.pak_83f6121d_99f7_48cb_a2da_3f3b86efdcad" />
+        <ComponentRef Id="_locales_pl.pak_71205e76_fd42_4c77_bd3d_733563e4a3f5" />
+        <ComponentRef Id="_locales_pt_BR.pak_c5bc74eb_dcb6_430f_af6b_f0b82a501b93" />
+        <ComponentRef Id="_locales_pt_PT.pak_ae6b5a19_944d_4962_a5bb_aff657e97483" />
+        <ComponentRef Id="_locales_ro.pak_bd61f80e_fd30_4494_a537_9d0f4d924967" />
+        <ComponentRef Id="_locales_ru.pak_eb066236_7e4b_40e4_bcd1_66e25e3452a9" />
+        <ComponentRef Id="_locales_sk.pak_3dd64332_0979_40da_9e5e_c39d47dabff9" />
+        <ComponentRef Id="_locales_sl.pak_124ffc08_80d0_4127_8ef8_a00e545449c6" />
+        <ComponentRef Id="_locales_sr.pak_5aa7e921_b663_4304_9718_25f67b2bcc98" />
+        <ComponentRef Id="_locales_sv.pak_25e4eede_74aa_446f_ae69_4450e4d23030" />
+        <ComponentRef Id="_locales_sw.pak_98e3f8a5_9410_4b23_aadf_81d11bf89a3e" />
+        <ComponentRef Id="_locales_ta.pak_eb06391b_89f8_4584_ac02_dbd3ebce3eee" />
+        <ComponentRef Id="_locales_te.pak_cbc13de2_374d_44d6_ab5c_350a3a91c0fe" />
+        <ComponentRef Id="_locales_th.pak_edc8f3f1_cba2_4436_9277_3d5b6fbad776" />
+        <ComponentRef Id="_locales_tr.pak_9b7aee1e_b625_497d_bf3e_5bf34348b169" />
+        <ComponentRef Id="_locales_uk.pak_3d7cd1a8_d709_4c83_8e7d_ebfe26714c06" />
+        <ComponentRef Id="_locales_ur.pak_31d28eae_caa1_4943_9b63_9574ab246bc0" />
+        <ComponentRef Id="_locales_vi.pak_ec3bc7d9_dce5_4602_9475_b48e875f4668" />
+        <ComponentRef Id="_locales_zh_CN.pak_96a3da26_a660_4d11_b18a_a629e9f023b5" />
+        <ComponentRef Id="_locales_zh_TW.pak_397a4438_ad24_4c8c_b11a_ccc7aa1c31f3" />
+        <ComponentRef Id="_exe_icon_extractor.node_58f7f19e_138a_4b10_915b_6d5e6cd3201b" />
+        <ComponentRef Id="_module.node_0c0bde85_6e7b_4096_bd40_e29154bbf23e" />
+        <ComponentRef Id="_exe_icon_extractor.node_6cc84663_588b_44cd_85e2_5f68a7ce7aad" />
+        <ComponentRef Id="_module.node_8fd1737b_1f6c_4c7d_a7ae_10f52108da79" />
+        <ComponentRef Id="_resources_app.asar_765f32f8_2fb1_4dcf_9c98_247e29ab2c18" />
+        <ComponentRef Id="_Extract.exe_46468665_9478_455c_9353_da134a9a28a9" />
+        <ComponentRef Id="_LICENSE_a37a44d5_114e_47ef_a9c2_2d2751679289" />
+        <ComponentRef Id="_LICENSES.chromium.html_a6147c40_d0f8_4e5e_a496_b5dd1ea5d896" />
+        <ComponentRef Id="_Squirrel.exe_ff460649_e6c9_4e84_a224_f9539c262d98" />
+        <ComponentRef Id="_chrome_100_percent.pak_db530490_78cd_4f63_b22c_bb8a33264ac6" />
+        <ComponentRef Id="_chrome_200_percent.pak_b76f6ec4_3fc1_4790_8b27_f3f8afa69f30" />
+        <ComponentRef Id="_d3dcompiler_47.dll_d5075cf2_136b_4476_95d0_15a296805b4c" />
+        <ComponentRef Id="_ffmpeg.dll_624151bf_5885_40c6_9c24_eff119abcf14" />
+        <ComponentRef Id="_icudtl.dat_92942024_1dde_4657_9ae8_25638aba6d3f" />
+        <ComponentRef Id="_libEGL.dll_1e070300_b250_4466_8fbd_bf9e46f4762b" />
+        <ComponentRef Id="_libGLESv2.dll_4ad4b51b_b188_4df7_910a_a7d0dcc8965b" />
+        <ComponentRef Id="_resources.pak_c97c79e3_26c9_465e_8cae_da3549abe10f" />
+        <ComponentRef Id="_snapshot_blob.bin_da56a27b_9df7_47d5_9ab0_661b0ed9ab46" />
+        <ComponentRef Id="_v8_context_snapshot.bin_460ccebd_2867_493c_a642_15c53002164b" />
+        <ComponentRef Id="_version_9da55426_1c6c_4472_89ad_4964bc0ce7f5" />
+        <ComponentRef Id="_vk_swiftshader.dll_13b66267_68f0_46c2_bbd0_054b393282ea" />
+        <ComponentRef Id="_vk_swiftshader_icd.json_87db7729_fde5_46a2_a3d8_9debccadc50c" />
+        <ComponentRef Id="_vulkan_1.dll_5c27d444_65f5_4764_9521_7ffe9249fc27" />
+        <ComponentRef Id="_Extract.exe_f53fe8bf_3bb0_447f_89a7_ea99990468af" />
+        <ComponentRef Id="_.installInfo.json_c7bb140a_99cf_4ca3_83dc_dbafe332fa78" />
+        <ComponentRef Id="RegistryInstallPath" />
+        <ComponentRef Id="UninstallDisplayName" />
+        <ComponentRef Id="UninstallPublisher" />
+        <ComponentRef Id="UninstallDisplayVersion" />
+        <ComponentRef Id="UninstallModifyString" />
+        <ComponentRef Id="UninstallString" />
+        <ComponentRef Id="UninstallDisplayIcon" />
+        <ComponentRef Id="ApplicationShortcut" />
+        <ComponentRef Id="DesktopShortcut" />
+        <ComponentRef Id="PurgeOnUninstall" />
+      </Feature> 
+    </Feature> 
+  </Product>
+</Wix>

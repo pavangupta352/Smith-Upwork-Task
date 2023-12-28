@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self' https://us-central1-extract-1-402612.cloudfunctions.net/check_subscription http://127.0.0.1:3000 http://localhost:8080 ;">
+	<title>Data Extractor</title>
+	
+	<link rel="stylesheet" href="css/main.css">	
+	<script src="js/main.js"></script>
+	
+	
+</head>
+<body>
+	<main>
+		<div id='debug_toggle'>d</div>	
+	
+		<div id='test_div'></div>
+		<div id='debug_div' class='debug'>debug</div>		
+
+		<div id='ERROR_DIV' class="error_div"></div>
+		<div id='main_screen'></div>
+
+
+		<div id='Splash'>
+			<h1>Welcome to Extract!</h1>
+			<p>
+				<div class='caption'>Automatically extract data from your pdf files in bulk!</div>
+				<ol>
+					<li>Select the folders where the files to be extracted are saved (click on Add Folders above)</li>
+					<li>Select the folder where you want the results to be saved</li>
+					<li>Navigate to your files under Folders (above), and click on any of your files (it does not matter which file you start with) and mark it to start the process (see instructions below)</li>
+					<li>Once a file is marked, the program will identify all the files that follow the same pattern as the file you marked and attempt to extract the data</li>
+					<li>Successfully extracted files will disapear from the list (you can always get them back on the list if you wish, see View above)</li>
+					<li>The extracted data will be saved in consolidated Excel files in the Results folder you selected</li>
+				</ol>
+			</p>
+			<h1>Mark your files</h1>
+			<div class='caption'>Extract uses AI and advanced algorithms to find the data in your files with your help.</div>
+			<p>
+				Marking consists of defining landmarks in the text that the program uses to find the data.<br/>
+				For example, if your pdf file shows <b>Account Number: 123456</b>, and you want to capture the account number
+				Click on <b>"Acount Number"</b> to create a marker that acts as a landmark and save it, then click on <b>123456</b> to create a marker that captures data specified by the landmark. 
+			</p>
+			
+			
+			
+			
+		</div>
+
+
+		
+		
+  </main>
+
+</body>
+
+
+<script src="js/renderer.js"></script>
+
+</html>
